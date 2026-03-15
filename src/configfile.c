@@ -35,7 +35,7 @@ static inline void mkdir_p(const char *dir) {
 	char *p=NULL;
 	size_t len;
 
-	snprintf(tmp,sizeof(tmp),"%s",dir);
+	snprintf(tmp,sizeof tmp,"%s",dir);
 	len=strlen(tmp);
 	if (tmp[len-1]=='/')
 		tmp[len-1]=0;
@@ -50,26 +50,19 @@ static inline void mkdir_p(const char *dir) {
 
 static inline FILE *config_file_open(const char *mode) {
 	char path[PATH_MAX];
+	char dir[PATH_MAX];
 	char *xdgconfig;
 	char *home;
 
 	xdgconfig=getenv("XDG_CONFIG_HOME");
 	home=getenv("HOME");
 
-	if (xdgconfig) {
-		strcpy(path,xdgconfig);
-		strcat(path,CONFIG_DIR2);
-		mkdir_p(path);
-	} else {
-		if (home)
-			strcpy(path,home);
-		else
-			strcpy(path,"");
-		strcat(path,CONFIG_DIR1);
-		strcat(path,CONFIG_DIR2);
-		mkdir_p(path);
-	}
-	strcat(path,CONFIG_NAME);
+	if (xdgconfig)
+		snprintf(dir,sizeof dir,"%s%s",xdgconfig,CONFIG_DIR2);
+	else
+		snprintf(dir,sizeof dir,"%s%s%s",home?home:"",CONFIG_DIR1,CONFIG_DIR2);
+	mkdir_p(dir);
+	snprintf(path,sizeof path,"%s%s",dir,CONFIG_NAME);
 
 	return fopen(path,mode);
 }
