@@ -756,17 +756,17 @@ static inline void color_print_pc(double v) {
 }
 
 static inline void view_curses(struct xxxid_stats_arr *cs,struct xxxid_stats_arr *ps,struct act_stats *act,int roll) {
+	const char *base_lbl=config.f.base==1000?"SI 1000":"IEC 1024";
+	char str_read[4],str_write[4],str_a_read[4],str_a_write[4];
+	double total_read,total_write,total_a_read,total_a_write;
 	double time_s=timediff_in_s(act->ts_o,act->ts_c);
-	double total_read,total_write;
-	double total_a_read,total_a_write;
+	int bllen=(int)strlen(base_lbl);
 	char pg_t_r[HISTORY_POS*5]={0};
 	char pg_t_w[HISTORY_POS*5]={0};
 	char pg_a_r[HISTORY_POS*5]={0};
 	char pg_a_w[HISTORY_POS*5]={0};
-	char str_read[4],str_write[4];
-	char str_a_read[4],str_a_write[4];
-	char *head1row_format="";
 	int promptx=0,prompty=0,show;
+	char *head1row_format="";
 	double maxvisible=0.0;
 	double mx_t_r=1000.0;
 	double mx_t_w=1000.0;
@@ -854,21 +854,21 @@ static inline void view_curses(struct xxxid_stats_arr *cs,struct xxxid_stats_arr
 
 		size_off=7-5+3-2+(!config.f.hidegraph?gr_width_h+1:0)-2;
 
-		if (maxx>=(int)strlen(HEADER_XL_FORMAT)+4*size_off)
+		if (maxx>=(int)strlen(HEADER_XL_FORMAT)+4*size_off+bllen)
 			head1row_format=HEADER_XL_FORMAT;
 		else
-			if (maxx>=(int)strlen(HEADER_L_FORMAT)+4*size_off)
+			if (maxx>=(int)strlen(HEADER_L_FORMAT)+4*size_off+bllen)
 				head1row_format=HEADER_L_FORMAT;
 			else
-				if (maxx>=(int)strlen(HEADER_M_FORMAT)+4*size_off)
+				if (maxx>=(int)strlen(HEADER_M_FORMAT)+4*size_off+bllen)
 					head1row_format=HEADER_M_FORMAT;
 				else
-					if (maxx>=(int)strlen(HEADER_S_FORMAT)+4*(size_off-2)) {
+					if (maxx>=(int)strlen(HEADER_S_FORMAT)+4*(size_off-2)+bllen) {
 						head1row_format=HEADER_S_FORMAT;
 						shrink_dm=1;
 						size_off-=2;
 					} else
-						if (maxx>=(int)strlen(HEADER_XS_FORMAT)+4*(size_off-5)) {
+						if (maxx>=(int)strlen(HEADER_XS_FORMAT)+4*(size_off-5)+bllen) {
 							head1row_format=HEADER_XS_FORMAT;
 							shrink_dm=1;
 							size_off-=5;
@@ -878,7 +878,7 @@ static inline void view_curses(struct xxxid_stats_arr *cs,struct xxxid_stats_arr
 							size_off-=5;
 						}
 		if (!config.f.hidegraph)
-			while (gr_width_h<gr_width&&maxx>=(int)strlen(head1row_format)+4*(size_off+1)) {
+			while (gr_width_h<gr_width&&maxx>=(int)strlen(head1row_format)+4*(size_off+1)+bllen) {
 				size_off++;
 				gr_width_h++;
 			}
@@ -927,11 +927,19 @@ static inline void view_curses(struct xxxid_stats_arr *cs,struct xxxid_stats_arr
 			}
 			mvhline(0,0,' ',maxx);
 			mvprintw(0,0,head1row_format,total_read,str_read,!config.f.hidegraph?pg_t_r:"",total_write,str_write,!config.f.hidegraph?pg_t_w:"",total_a_read,str_a_read,!config.f.hidegraph?pg_a_r:"",total_a_write,str_a_write,!config.f.hidegraph?pg_a_w:"");
+			if (maxx>bllen)
+				mvprintw(0,maxx-bllen,"%s",base_lbl);
 			show=FALSE;
 		}
 	} else {
+		int h1vis=(int)strlen(HEADER1_FORMAT)+2*(7-5+3-2+(!config.f.hidegraph?gr_width_h+1:0)-2);
+		int xpos=maxx-bllen;
+
 		mvhline(0,0,' ',maxx);
 		mvprintw(0,0,HEADER1_FORMAT,total_read,str_read,!config.f.hidegraph?pg_t_r:"",total_write,str_write,!config.f.hidegraph?pg_t_w:"");
+		if (xpos<h1vis)
+			xpos=h1vis;
+		mvprintw(0,xpos,"%s",base_lbl);
 
 		if (!in_ionice&&!in_filter&&!in_search) {
 			mvhline(1,0,' ',maxx);
