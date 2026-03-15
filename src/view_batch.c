@@ -109,7 +109,7 @@ static inline void view_batch(struct xxxid_stats_arr *cs,struct xxxid_stats_arr 
 
 		pw_name=u8strpadt(s->pw_name,10);
 
-		if (config.f.fullcmdline&&s->cmdline_comm) { // append custom thread name before full cmdline
+		if (config.f.fullcmdline&&s->cmdline_comm&&s->cmdline_long) { // append custom thread name before full cmdline
 			char tb[1+strlen(s->cmdline_comm)+1+strlen(s->cmdline_long)+1];
 
 			sprintf(tb,"[%s]%s",s->cmdline_comm,s->cmdline_long);
