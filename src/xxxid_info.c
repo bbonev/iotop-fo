@@ -182,15 +182,20 @@ inline int nl_xxxid_info(pid_t tid,pid_t pid,struct xxxid_stats *stats) {
 	int len=0;
 
 	while (len<rv) {
+		if (!na->nla_len)
+			break;
 		len+=NLA_ALIGN(na->nla_len);
 
 		if (na->nla_type==TASKSTATS_TYPE_AGGR_TGID||na->nla_type==TASKSTATS_TYPE_AGGR_PID) {
+			struct nlattr *na2=(struct nlattr *)NLA_DATA(na);
 			int aggr_len=NLA_PAYLOAD(na->nla_len);
+			struct nlattr *na2base=na2;
 			int len2=0;
 
-			na=(struct nlattr *)NLA_DATA(na);
 			while (len2<aggr_len) {
-				if (na->nla_type==TASKSTATS_TYPE_STATS) {
+				if (!na2->nla_len)
+					break;
+				if (na2->nla_type==TASKSTATS_TYPE_STATS) {
 					// NOTE: we use the build system kernel headers for the version field only
 					// all the data access is done by using copies of the respective versions
 					// of the kernel headers
@@ -199,9 +204,9 @@ inline int nl_xxxid_info(pid_t tid,pid_t pid,struct xxxid_stats *stats) {
 					// not rely on the build system kernel headers for universal access and have
 					// to keep the copies.
 					// In this way a build with any kernel headers will work everywhere
-					struct taskstats *ts=NLA_DATA(na);
-					struct taskstats_v14 *t14=NLA_DATA(na);
-					struct taskstats_v15 *t15=NLA_DATA(na);
+					struct taskstats *ts=NLA_DATA(na2);
+					struct taskstats_v14 *t14=NLA_DATA(na2);
+					struct taskstats_v15 *t15=NLA_DATA(na2);
 
 					if (ts->version<IOTOP_TASKSTATS_MINVER) // v3 and below does not have the data we require
 						taskstats_ver=ts->version;
@@ -219,8 +224,8 @@ inline int nl_xxxid_info(pid_t tid,pid_t pid,struct xxxid_stats *stats) {
 						stats->euid=t15->ac_uid;
 					}
 				}
-				len2+=NLA_ALIGN(na->nla_len);
-				na=(struct nlattr *)((char *)na+len2);
+				len2+=NLA_ALIGN(na2->nla_len);
+				na2=(struct nlattr *)((char *)na2base+len2);
 			}
 		}
 		na=(struct nlattr *)((char *)GENLMSG_DATA(&msg)+len);
